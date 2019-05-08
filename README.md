@@ -1,4 +1,9 @@
-# Performance_Monitoring
+﻿# Performance_Monitoring
 一个可以查看实时网速，CPU/内存使用率，剩余电量的悬浮窗
 
 鼠标悬浮在电池指示上可以显示详细信息，本程序依赖于psutil 
+
+
+2019.05.09更新
+
+添加贴边隐藏（隐藏速度有点不稳定），右键菜单还没来得及做，pos.conf记录了上次退出的位置信息，dashboard.ico是图标，可以直接打包，这个是扁平状的
