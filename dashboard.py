@@ -199,6 +199,8 @@ def float_format(f, t):
 def Dashboard_hook(label0,label1,label2,label3,label4,label5):
     palette5 = QPalette()
     label5.setAutoFillBackground(True)
+    dll = ctypes.CDLL("KERNEL32.dll")
+    POWER_STATUS=SYSTEM_POWER_STATUS()
     while True:
         label3.setText('CPU {:.0f}%'.format(psutil.cpu_percent(None)))#cpu使用率
         label4.setText('内存 {:.0f}%'.format(psutil.virtual_memory().percent))#内存使用率
@@ -222,8 +224,6 @@ def Dashboard_hook(label0,label1,label2,label3,label4,label5):
             label2.setText("↓{}KB/s".format(float_format(recv / 1024, 'kb')))
         else:
             label2.setText("↓{}B/s".format(float_format(recv, 'b')))
-        dll = ctypes.CDLL("KERNEL32.dll")
-        POWER_STATUS=SYSTEM_POWER_STATUS()
         dll.GetSystemPowerStatus(ctypes.byref(POWER_STATUS))
         if not POWER_STATUS.BatteryFlag==255:    #电池充电状态 1：>66%；0：<66% >33%；2：<33%；4：<5%；8：充电；128：没有电池；225：未知状态 - 无法读取电池标志信息
             Battery_charge_time=POWER_STATUS.BatteryFullLifeTime    #完全充电时电池寿命的秒数，如果电池寿命未知或设备已连接到交流电源，则为-1

@@ -6,8 +6,8 @@ import ctypes
 import psutil
 import threading 
 from time import sleep
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel,  QToolTip,  QMenu
-from PyQt5.QtGui import QPalette, QColor, QFont, QBitmap,  QCursor
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QToolTip, QMenu
+from PyQt5.QtGui import QPalette, QColor, QFont, QBitmap, QCursor
 from PyQt5.QtCore import Qt
 
 class Suspension_window(QWidget):
@@ -41,6 +41,7 @@ class Suspension_window(QWidget):
         label2=QLabel("↓1000KB/s",self)
         label3=QLabel(" CPU 99%",self)
         label4=QLabel("内存 99%",self)
+        label5=QLabel("",self)
         # 修改字体
         label1.setFont(QFont("Roman times",10.5))
         label2.setFont(QFont("Roman times",10.5))
@@ -57,12 +58,14 @@ class Suspension_window(QWidget):
         label2.resize(width,height)
         label3.resize(width,height)
         label4.resize(width,height)
+        label5.resize(Battery_width,80)
         # 调整位置 横,纵
         label0.move(0,0)
         label1.move(Battery_width+margin,0)
         label2.move(Battery_width+margin,height)
         label3.move(Battery_width+margin+width+margin,0)
         label4.move(Battery_width+margin+width+margin,height)
+        label5.move(0,0)
         # 设置颜色
         palette2.setColor(QPalette.WindowText, textcolot)
         label1.setPalette(palette2)
@@ -70,7 +73,7 @@ class Suspension_window(QWidget):
         label3.setPalette(palette2)
         label4.setPalette(palette2)
         #开启监控
-        t = threading.Thread(target=set_hook,args=(label0,label1,label2,label3,label4))
+        t = threading.Thread(target=set_hook,args=(label0,label1,label2,label3,label4,label5))
         t.setDaemon(True)
         t.start()
 
@@ -121,9 +124,9 @@ def float_format(f, t):
     else:
         return format(f, '.2f')
 
-def set_hook(label0,label1,label2,label3,label4):
-    palette0 = QPalette()
-    label0.setAutoFillBackground(True)
+def set_hook(label0,label1,label2,label3,label4,label5):
+    palette5 = QPalette()
+    label5.setAutoFillBackground(True)
     byteSent1=psutil.net_io_counters().bytes_sent#发送总字节
     byteRecv1 =psutil.net_io_counters().bytes_recv#接收总字节
     while True:
@@ -148,37 +151,41 @@ def set_hook(label0,label1,label2,label3,label4):
         byteSent1=byteSent2
         byteRecv1=byteRecv2
         if sys.platform=='win32':
-            dll = ctypes.CDLL("KERNEL32.dll")
-            POWER_STATUS=SYSTEM_POWER_STATUS()
             dll.GetSystemPowerStatus(ctypes.byref(POWER_STATUS))
             if not POWER_STATUS.BatteryFlag==255:    #电池充电状态 1：>66%；0：<66% >33%；2：<33%；4：<5%；8：充电；128：没有电池；225：未知状态 - 无法读取电池标志信息
                 Battery_charge_time=POWER_STATUS.BatteryFullLifeTime    #完全充电时电池寿命的秒数，如果电池寿命未知或设备已连接到交流电源，则为-1
                 Battery_percent=POWER_STATUS.BatteryLifePercent    #剩余电量的百分比；未知255
                 Battery_availability_time=POWER_STATUS.BatteryLifeTime    #剩余电池寿命的秒数，如果剩余秒数未知或设备已连接到交流电源，则为-1
                 if Battery_percent>60:
-                    palette0.setColor(QPalette.Background, QColor(0, 255, 0))
+                    palette5.setColor(QPalette.Background, QColor(0, 255, 0))
                 elif Battery_percent<20:
-                    palette0.setColor(QPalette.Background, QColor( 255,0,  0))
+                    palette5.setColor(QPalette.Background, QColor( 255,0,  0))
                 else:
-                    palette0.setColor(QPalette.Background, QColor(255,140,0))
-                label0.setPalette(palette0)
-                label0.move(0, 80-0.8*Battery_percent)
-                label0.resize(Battery_width,0.8*Battery_percent)
+                    palette5.setColor(QPalette.Background, QColor(255,140,0))
+                label5.setPalette(palette5)
+                label5.move(0, 80-int(0.8*Battery_percent))
+                label5.resize(Battery_width,int(0.8*Battery_percent))
                 if POWER_STATUS.ACLineStatus==1:#交流电源状态 0：未连接；1：已连接；255：未知状态
                     if POWER_STATUS.BatteryFlag==8:
                         label0.setToolTip("电池电量：{0}%\n距充满还需{1}小时{2}分钟".format(Battery_percent,Battery_charge_time//3600, Battery_charge_time//60 ))
+                        label5.setToolTip("电池电量：{0}%\n距充满还需{1}小时{2}分钟".format(Battery_percent,Battery_charge_time//3600, Battery_charge_time//60 ))
                     else:
                         label0.setToolTip("电池电量：{0}%\n已连接电源，未充电".format(Battery_percent,Battery_charge_time//3600, Battery_charge_time//60 ))
+                        label5.setToolTip("电池电量：{0}%\n已连接电源，未充电".format(Battery_percent,Battery_charge_time//3600, Battery_charge_time//60 ))
                 else:
                     if POWER_STATUS.BatteryLifeTime==-1:
                         label0.setToolTip("电池剩余：{0}%".format(Battery_percent))
+                        label5.setToolTip("电池剩余：{0}%".format(Battery_percent))
                     else:
                         label0.setToolTip("电池剩余：{0}%\n可用{1}小时{2}分钟".format(Battery_percent,Battery_availability_time//3600, Battery_availability_time//60 ))
+                        label5.setToolTip("电池剩余：{0}%\n可用{1}小时{2}分钟".format(Battery_percent,Battery_availability_time//3600, Battery_availability_time//60 ))
         sleep(1)
 
 if __name__ == '__main__':
     if sys.platform=='win32':
         Battery_width=6
+        dll = ctypes.CDLL("KERNEL32.dll")
+        POWER_STATUS=SYSTEM_POWER_STATUS()
     else:
         Battery_width=0
     app = QApplication(sys.argv)
